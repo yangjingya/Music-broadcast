@@ -10,6 +10,17 @@ const HtmlWebpackPlugin = require('html-webpack-plugin')
 const FriendlyErrorsPlugin = require('friendly-errors-webpack-plugin')
 const portfinder = require('portfinder')
 
+//第一步
+const axios = require('axios');
+const express = require('express');
+const app=express()
+const apiRoutes = express.Router();
+//第一步
+
+//第三步
+app.use('/api',apiRoutes)
+//第三步
+
 const HOST = process.env.HOST
 const PORT = process.env.PORT && Number(process.env.PORT)
 
@@ -22,6 +33,24 @@ const devWebpackConfig = merge(baseWebpackConfig, {
 
   // these devServer options should be customized in /config/index.js
   devServer: {
+    before(app){
+      //第二步
+      app.get('/api/getDiscList',function(req,res){
+        var url="https://c.y.qq.com/splcloud/fcgi-bin/fcg_get_diss_by_tag.fcg"
+        axios.get(url,{
+          headers:{
+            authory: 'c.y.qq.com',
+            referer: 'https://y.qq.com/portal/playlist.html'
+          },
+          params:req.query//浏览器请求getDiscList接口时所自带的参数
+        }).then((response)=>{
+          res.json(response.data)
+        }).catch((e)=>{
+          console.log(e)
+        })
+      })
+      //第二步
+    },
     clientLogLevel: 'warning',
     historyApiFallback: {
       rewrites: [
