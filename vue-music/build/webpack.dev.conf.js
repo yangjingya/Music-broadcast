@@ -48,22 +48,8 @@ const devWebpackConfig = merge(baseWebpackConfig, {
         }).catch((e)=>{
           console.log(e)
         })
-      }),
-      //第二步
-      app.get('/api/getSingers',function(req,res){
-        var url='https://u.y.qq.com/cgi-bin/musicu.fcg'
-        axios.get(url,{
-          headers:{
-            authority: 'u.y.qq.com',
-            referer: 'https://y.qq.com/portal/singer_list.html'
-          },
-          params:req.query
-        }).then((response)=>{
-          res.json(response.data)
-        }).catch((e)=>{
-          console.log(e)
-        })
       })
+      //第二步
     },
     clientLogLevel: 'warning',
     historyApiFallback: {
