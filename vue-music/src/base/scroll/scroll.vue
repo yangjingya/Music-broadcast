@@ -47,6 +47,12 @@ export default {
         },
         refresh(){
             this.scroll&&this.scroll.refresh()
+        },
+        scrollTo(){
+            this.scroll&&this.scroll.scrollTo.apply(this.scroll,arguments)//让scroll获取到scrollTo的功能，重定向this
+        },
+        scrollToElement(){//apply将参数传递到scroll的的函数中去
+            this.scroll&&this.scroll.scrollToElement.apply(this.scroll,arguments)
         }
     },
     watch:{

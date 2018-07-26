@@ -1,31 +1,70 @@
 <template>
-    <scroll class="listview" :data="data">
+    <scroll class="listview" :data="data" ref="listview">
         <ul>
-            <li v-for="group in data" class="list-group">
+            <li v-for="group in data" class="list-group" ref="listGroup">
                 <h2 class="list-group-title">{{group.title}}</h2>
                 <ul>
                     <li v-for="item in group.items" class="list-group-item">
-                        <img class="avatar" :src="item.avatar">
+                        <img class="avatar" v-lazy="item.avatar">
                         <span class="name">{{item.name}}</span>
                     </li>
                 </ul>
             </li>
         </ul>
+        <div class="list-shortcut" @touchstart="onShortcut" @click="onShortcut" @touchmove.stop.prevent="onTouchMove">
+            <ul>
+                <li v-for="(item,index) in shortcutList" class="item" :data-index="index">
+                    {{item}}
+                </li>
+            </ul>
+        </div>
     </scroll>
 </template>
 
 <script type="text/ecmascript-6">
 import Scroll from 'base/scroll/scroll.vue'
+import {getData} from 'common/js/dom.js'
+
+const ARCHOR_HEIGHT=18
 
 export default {
+    created(){//不用data或者props是因为vue会创建set和get函数监听这些数据，这里的touch数据只是在两个函数之间传递
+        this.touch={}
+    },
     props:{
         data:{
             type:Array,
             default:[]
         }
     },
+    computed:{
+        shortcutList(){
+            return this.data.map((group)=>{
+                return group.title.substr(0,1)
+            })
+        }
+    },
     components:{
         Scroll
+    },
+    methods:{
+        onShortcut(e){
+            let anchorIndex=getData(e.target,"index")
+            let firstTouch=e.touches[0]
+            this.touch.y1=firstTouch.pageY
+            this.touch.anchorIndex=anchorIndex
+            this._scrollTo(anchorIndex)
+        },
+        onTouchMove(e){
+            let firstTouch=e.touches[0]
+            this.touch.y2=firstTouch.pageY
+            let delta=(this.touch.y2-this.touch.y1)/ARCHOR_HEIGHT | 0
+            let anchorIndex=parseInt(this.touch.anchorIndex)+delta
+            this._scrollTo(anchorIndex)
+        },
+        _scrollTo(index){
+            this.$refs.listview.scrollToElement(this.$refs.listGroup[index],0)
+        }
     }
 }
 </script>
@@ -36,7 +75,7 @@ export default {
     .listview 
         position:relative
         width 100%
-        heigt 100%
+        height 100%
         overflow hidden
         background-color $color-background
         .list-group
@@ -60,6 +99,22 @@ export default {
                     margin-left 20px
                     color $color-text-l
                     font-size $font-size-medium
-
+        .list-shortcut
+            position: absolute
+            z-index: 30
+            right: 0
+            top: 50%
+            transform: translateY(-50%)
+            width: 20px
+            padding: 20px 0
+            border-radius: 10px
+            text-align: center
+            background: $color-background-d
+            font-family: Helvetica
+            .item
+                padding: 3px
+                line-height: 1
+                color: $color-text-l
+                font-size: $font-size-small
 </style>
 
