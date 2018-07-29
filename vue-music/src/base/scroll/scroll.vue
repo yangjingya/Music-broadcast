@@ -22,6 +22,10 @@ export default {
         data:{
             type:Array,
             default:null
+        },
+        listenScroll:{
+            type:Boolean,
+            default:false
         }
     },
     mounted(){
@@ -38,6 +42,12 @@ export default {
                 probeType:this.probeType,
                 click:this.click
             })
+
+            if(this.listenScroll){//获取当前位置
+                this.scroll.on('scroll',(pos)=>{
+                    this.$emit('scroll',pos)
+                })
+            }
         },
         enable(){
             this.scroll&&this.scroll.enable()

@@ -1,6 +1,7 @@
 <template>
     <div class="singer">
-        <listview :data="singerList"></listview>
+        <listview :data="singerList" @select="selectSinger"></listview>
+        <router-view></router-view>
     </div>
 </template>
 
@@ -9,6 +10,7 @@ import {getSingers} from 'api/singer.js'
 import {ERR_OK} from 'api/config.js'
 import Singer from 'common/js/singer.js'
 import Listview from 'base/listview/listview.vue'
+import {mapMutations} from 'vuex'
 
 const HOT_NAME="热门"
 const HOT_SINGER_LENGTH=10
@@ -23,6 +25,12 @@ export default {
         this._getSingers()
     },
     methods:{
+        selectSinger(singer){
+            this.$router.push({
+                path:`/singer/${singer.id}`
+            })
+            this.setSinger(singer)
+        },
         _getSingers(){
             getSingers().then((res)=>{
                 if(res.code===ERR_OK){
@@ -72,7 +80,10 @@ export default {
            })//sort的排序方法
 
            return hot.concat(ret) //用concat连接两个数组
-       }
+       },
+       ...mapMutations({
+           setSinger:'SET_SINGER'
+       })
     },
     components:{
        Listview

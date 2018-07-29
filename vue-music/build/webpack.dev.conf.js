@@ -48,8 +48,22 @@ const devWebpackConfig = merge(baseWebpackConfig, {
         }).catch((e)=>{
           console.log(e)
         })
-      })
+      }),
       //第二步
+      app.get('/api/getInforForSongs',function(req,res){
+        var url="https://c.y.qq.com/base/fcgi-bin/fcg_music_express_mobile3.fcg"
+        axios.get(url,{
+          headers:{
+            authority: 'c.y.qq.com',
+            referer: 'https://y.qq.com/portal/player.html'
+          },
+          params:req.query
+        }).then((response)=>{
+          res.json(response.data)
+        }).catch((e)=>{
+          console.log(e)
+        })
+      })
     },
     clientLogLevel: 'warning',
     historyApiFallback: {

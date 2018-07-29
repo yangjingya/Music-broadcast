@@ -18,9 +18,10 @@ export default {
     .m-header
         position relative
         height 44px
-        text-align center
         color $color-theme
+        background $color-background-top
         font-size 0
+        padding-left 10px
         .icon
             display inline-block
             vertical-align top
@@ -35,5 +36,6 @@ export default {
             vertical-align top
             line-height 44px
             font-size $font-size-large
+            color $color-background
 </style>
 

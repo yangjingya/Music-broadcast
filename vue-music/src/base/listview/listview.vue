@@ -1,35 +1,53 @@
 <template>
-    <scroll class="listview" :data="data" ref="listview">
+    <scroll class="listview" :data="data" ref="listview" :listenScroll="listenScroll" :probeType="probeType" @scroll="scroll">
         <ul>
             <li v-for="group in data" class="list-group" ref="listGroup">
-                <h2 class="list-group-title">{{group.title}}</h2>
+                <!-- <h2 class="list-group-title">{{group.title}}</h2> -->
                 <ul>
-                    <li v-for="item in group.items" class="list-group-item">
+                    <li @click="SelectItem(item)" v-for="item in group.items" class="list-group-item">
                         <img class="avatar" v-lazy="item.avatar">
                         <span class="name">{{item.name}}</span>
                     </li>
                 </ul>
             </li>
         </ul>
-        <div class="list-shortcut" @touchstart="onShortcut" @click="onShortcut" @touchmove.stop.prevent="onTouchMove">
+        <div class="list-shortcut" @touchstart="onShortcut" @touchmove.stop.prevent="onTouchMove">
             <ul>
-                <li v-for="(item,index) in shortcutList" class="item" :data-index="index">
+                <li v-for="(item,index) in shortcutList" class="item" :data-index="index" :class="{'current':currentIndex===index}">
                     {{item}}
                 </li>
             </ul>
+        </div>
+        <div class="list-fixed"  ref="fixed">
+            <h1 class="fixed-title">{{fixedTitle}}</h1>
+        </div>
+        <div v-show="!data.length" class="loading-container">
+            <loading></loading>
         </div>
     </scroll>
 </template>
 
 <script type="text/ecmascript-6">
 import Scroll from 'base/scroll/scroll.vue'
+import Loading from 'base/loading/loading.vue'
 import {getData} from 'common/js/dom.js'
 
 const ARCHOR_HEIGHT=18
+const TITLE_HEIGHT=30
 
 export default {
+    data(){
+        return{
+            scrollY:-1,
+            currentIndex:0,
+            // diff:-1
+        }
+    },
     created(){//不用data或者props是因为vue会创建set和get函数监听这些数据，这里的touch数据只是在两个函数之间传递
-        this.touch={}
+        this.touch={},
+        this.listenScroll=true,
+        this.listHeight,
+        this.probeType=3//监听实时数据，不节流
     },
     props:{
         data:{
@@ -42,10 +60,14 @@ export default {
             return this.data.map((group)=>{
                 return group.title.substr(0,1)
             })
+        },
+        fixedTitle(){
+            return this.data[this.currentIndex]?this.data[this.currentIndex].title:''
         }
     },
     components:{
-        Scroll
+        Scroll,
+        Loading
     },
     methods:{
         onShortcut(e){
@@ -60,11 +82,69 @@ export default {
             this.touch.y2=firstTouch.pageY
             let delta=(this.touch.y2-this.touch.y1)/ARCHOR_HEIGHT | 0
             let anchorIndex=parseInt(this.touch.anchorIndex)+delta
-            this._scrollTo(anchorIndex)
+            if(anchorIndex>=0){
+                this._scrollTo(anchorIndex)
+            }
         },
+        scroll(pos){
+            this.scrollY=pos.y
+        },//实时获取Y轴位置
         _scrollTo(index){
+            if(!index && index!=0){
+                return
+            }
+            this.scrollY=-this.listHeight[index]//点击右侧导航时 因为无法触动scroll的事件 所以在此处手动更改scrollY
             this.$refs.listview.scrollToElement(this.$refs.listGroup[index],0)
+        },
+        _calculateHeight(){
+            this.listHeight=[]
+            const list=this.$refs.listGroup
+            let height=0
+            this.listHeight.push(height)
+            for(let i=0;i<list.length;i++){
+                let item=list[i]
+                height+=item.clientHeight
+                this.listHeight.push(height)
+            }
+            //计算dom的高度，获取dom高度区间，以便实现联动
+        },
+        SelectItem(item){
+            this.$emit('select',item)
         }
+    },
+    watch:{
+        data(){
+            setTimeout(()=>{
+                this._calculateHeight()
+            },20)
+        },
+        scrollY(newY){
+            const listHeight=this.listHeight
+            if(newY>0){
+                this.currentIndex=0
+                return
+            }
+
+            for(let i=0;i<listHeight.length-1;i++){
+                let height1=listHeight[i]
+                let height2=listHeight[i+1]
+                if(-newY>=height1&&-newY<height2){
+                    this.diff=height2+newY //获取两个区块title之间的距离
+                    this.currentIndex=i
+                    return
+                }
+            }
+
+            this.currentIndex=listHeight.length-2;
+        }
+        // diff(newVal){
+        //     let fixedTop=(newVal>0&&newVal<TITLE_HEIGHT) ? newVal - TITLE_HEIGHT:0
+        //     if(this.fixedTop===fixedTop){
+        //         return
+        //     }
+        //     this.fixedTop=fixedTop
+        //     this.$refs.fixed.style.transform=`translate3d(0,${fixedTop}px,0)`
+        // }
     }
 }
 </script>
@@ -116,5 +196,24 @@ export default {
                 line-height: 1
                 color: $color-text-l
                 font-size: $font-size-small
+                &.current
+                    color:$color-background-top
+        .list-fixed
+            position: absolute
+            top: 0
+            left: 0
+            width: 100%
+            .fixed-title
+                height: 30px
+                line-height: 30px
+                padding-left: 20px
+                font-size: $font-size-small
+                color: $color-text-l
+                background: $color-highlight-background
+        .loading-container
+            position: absolute
+            width: 100%
+            top: 50%
+            transform: translateY(-50%)
 </style>
 
