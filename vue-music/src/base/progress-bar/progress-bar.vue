@@ -1,5 +1,5 @@
 <template>
-    <div class="progress-bar" ref="progressBar">
+    <div class="progress-bar" ref="progressBar" @click.prevent="progressClick">
         <div class="bar-inner">
             <div class="progress" ref="progress"></div>
             <div class="progress-btn-wrapper" ref="progressBtn"  @touchstart.prevent="progressTouchStart" @touchmove.prevent="progressTouchMove" @touchend.prevent="progressTouchEnd">
@@ -50,6 +50,10 @@
             },
             progressTouchEnd(e){
                 this.touch.initiate=false
+                this._trrigerPercent()
+            },
+            progressClick(e){
+                this._offSet(e.offsetX)
                 this._trrigerPercent()
             },
             _offSet(offSetWidth){

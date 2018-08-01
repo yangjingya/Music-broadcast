@@ -58,8 +58,10 @@
                     <h2 class="name">{{currentSong.name}}</h2>
                     <p class="desc">{{currentSong.singer}}</p>
                 </div>
-                <div class="control" @click.stop="togglePlaying">
-                    <i :class="miniIcon"></i>
+                <div class="control">
+                    <progress-circle radius="32" :percent="percent">
+                        <i @click.stop="togglePlaying" class="icon-mini" :class="miniIcon"></i>
+                    </progress-circle>
                 </div>
                 <div class="control">
                     <i class="icon-playlist" ></i>
@@ -75,6 +77,7 @@
     import animations from 'create-keyframe-animation'
     import {prefixStyle} from 'common/js/dom.js'
     import ProgressBar from 'base/progress-bar/progress-bar.vue'
+    import ProgressCircle from 'base/progress-circle/progress-circle'
 
     const transform=prefixStyle('transform')
     export default{
@@ -242,7 +245,8 @@
             }
         },
         components:{
-            ProgressBar
+            ProgressBar,
+            ProgressCircle
         }
     }
 </script>
@@ -472,9 +476,12 @@
                 flex: 0 0 30px
                 width: 30px
                 padding: 0 10px
-                .icon-play-mini, .icon-pause-mini, .icon-playlist
+                .icon-play-mini, .icon-pause-mini
                     font-size: 30px
-                    color: $color-theme-d
+                    color: $color-theme-dd
+                .icon-playlist
+                    font-size: 30px
+                    color: $color-theme
                 .icon-mini
                     font-size: 32px
                     position: absolute
