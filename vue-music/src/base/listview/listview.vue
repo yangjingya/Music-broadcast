@@ -86,6 +86,9 @@ export default {
                 this._scrollTo(anchorIndex)
             }
         },
+        refresh(){
+            this.$refs.listview.refresh()
+        },
         scroll(pos){
             this.scrollY=pos.y
         },//实时获取Y轴位置

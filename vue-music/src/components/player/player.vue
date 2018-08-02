@@ -98,6 +98,7 @@
     import {playMode} from 'common/js/config.js'
     import {shuffle} from 'common/js/util.js'
     import Scroll from 'base/scroll/scroll.vue'
+    
 
     const transform=prefixStyle('transform')
     const transitionDuration=prefixStyle('transitionDuration')
@@ -190,13 +191,17 @@
                 if(!this.songReady){
                     return
                 }
-                let index=this.currentIndex-1
-                if(index===-1){
-                    index=this.playList.length-1
-                }
-                this.setCurrentIndex(index)
-                if(!this.playing){
-                    this.togglePlaying()
+                if(this.playList.length===1){
+                    this.loop()
+                }else{
+                    let index=this.currentIndex-1
+                    if(index===-1){
+                        index=this.playList.length-1
+                    }
+                    this.setCurrentIndex(index)
+                    if(!this.playing){
+                        this.togglePlaying()
+                    }
                 }
                 this.songReady=false
             },
@@ -204,13 +209,17 @@
                 if(!this.songReady){
                     return
                 }
-                let index=this.currentIndex+1
-                if(index===this.playList.length){
-                    index=0
-                }
-                this.setCurrentIndex(index)
-                if(!this.playing){
-                    this.togglePlaying()
+                if(this.playList.length===1){
+                    this.loop()
+                }else{
+                    let index=this.currentIndex+1
+                    if(index===this.playList.length){
+                        index=0
+                    }
+                    this.setCurrentIndex(index)
+                    if(!this.playing){
+                        this.togglePlaying()
+                    }
                 }
                 this.songReady=false
             },
@@ -278,6 +287,10 @@
                     if(this.playing){
                         this.currentSongContent.play()
                     }
+                }).catch(()=>{
+                    this.currentSongContent=null
+                    this.playingLyric=''
+                    this.currentLineNumber=0
                 })
             },
             handleLyric({lineNum,txt}){
@@ -391,10 +404,10 @@
                 if(this.currentSongContent){
                     this.currentSongContent.stop()
                 }
-                this.$nextTick(()=>{
+                setTimeout(()=>{
                     this.$refs.audio.play()
                     this.getSongsContent()
-                })
+                },1000)
             },
             playing(whetherPlay){
                 const audio=this.$refs.audio

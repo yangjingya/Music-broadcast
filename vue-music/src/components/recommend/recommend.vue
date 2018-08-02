@@ -1,5 +1,5 @@
 <template>
-    <div class="recommend">
+    <div class="recommend" ref="recommend">
         <scroll ref="scroll" class="recommend-content" :data="discList"><!-- 传送data数据 让BScrollrefresh -->
             <div>
                 <div v-if="recommends.length" class="slider-wrapper">
@@ -14,7 +14,7 @@
                 <div class="recommend-list">
                     <h1 class="list-title">热门歌单推荐</h1>
                     <ul>
-                        <li v-for="item in discList" class="item">
+                        <li v-for="item in discList" class="item" @click="selectItem(item)">
                             <div class="icon">
                                 <img v-lazy="item.imgurl" width="60" height="60">
                             </div>
@@ -30,6 +30,7 @@
                 <loading></loading>
             </div>
         </scroll>
+        <router-view></router-view>
     </div>
 </template>
 
@@ -39,8 +40,10 @@ import Slider from 'base/slider/slider.vue'
 import Scroll from 'base/scroll/scroll.vue'
 import {getRecommend,getDiscList} from 'api/recommend.js'
 import {ERR_OK} from 'api/config.js'
+import {playListMixin} from 'common/js/mixin.js'
 
 export default {
+    mixins:[playListMixin],
     data(){
         return {
             recommends:[],
@@ -52,6 +55,11 @@ export default {
         this._getDiscList()
     },
     methods:{
+        selectItem(item){
+            this.$router.push({
+                path:`/recommend/${item.dissid}`
+            })
+        },
         _getRecommend(){
             getRecommend().then((res)=>{
                 if(res.code===ERR_OK){
@@ -71,6 +79,11 @@ export default {
                 this.$refs.scroll.refresh()
                 this.checkLoadded=true
             }
+        },
+        handlePlaylist(playList){
+            const bottom = playList.length > 0 ? '60px' : ''
+            this.$refs.recommend.style.bottom = bottom
+            this.$refs.scroll.refresh()
         }
     },
     components:{

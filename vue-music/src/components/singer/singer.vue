@@ -1,6 +1,6 @@
 <template>
-    <div class="singer">
-        <listview :data="singerList" @select="selectSinger"></listview>
+    <div class="singer" ref="singer">
+        <listview :data="singerList" @select="selectSinger" ref="list"></listview>
         <router-view></router-view>
     </div>
 </template>
@@ -11,11 +11,13 @@ import {ERR_OK} from 'api/config.js'
 import Singer from 'common/js/singer.js'
 import Listview from 'base/listview/listview.vue'
 import {mapMutations} from 'vuex'
+import {playListMixin} from 'common/js/mixin.js'
 
 const HOT_NAME="热门"
 const HOT_SINGER_LENGTH=10
 
 export default {
+    mixins:[playListMixin],
     data(){
         return{
             singerList:[]
@@ -80,10 +82,15 @@ export default {
            })//sort的排序方法
 
            return hot.concat(ret) //用concat连接两个数组
-       },
-       ...mapMutations({
-           setSinger:'SET_SINGER'
-       })
+        },
+        handlePlaylist(playList){
+            const bottom = playList.length > 0 ? '60px' : ''
+            this.$refs.singer.style.bottom = bottom
+            this.$refs.list.refresh()
+        },
+        ...mapMutations({
+            setSinger:'SET_SINGER'
+        })
     },
     components:{
        Listview
