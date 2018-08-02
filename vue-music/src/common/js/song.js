@@ -1,5 +1,7 @@
-import { commonParams } from "../../api/config";
+import { commonParams,ERR_OK } from "api/config";
 import Axios from "../../../node_modules/axios";
+import {getSongs} from 'api/songs'
+import {Base64} from 'js-base64'
 
 export default class Song{
     constructor({id,mid,singer,name,album,duration,image,url}){
@@ -11,6 +13,21 @@ export default class Song{
         this.duration=duration
         this.image=image
         this.url=url
+    }
+    getSongsContent(){
+        if(this.songContent){
+            return Promise.resolve(this.songContent)
+        }
+        return new Promise((resolve,reject)=>{
+            getSongs(this.mid).then((res)=>{
+                if(res.retcode==ERR_OK){
+                    this.songContent=Base64.decode(res.lyric)
+                    resolve(this.songContent)
+                }else{
+                    reject('no songContent')
+                }
+            })
+        })
     }
 }
 
@@ -62,3 +79,4 @@ export function getInforForSongs(songmid){
        return Promise.resolve(res.data)
     })
 }
+

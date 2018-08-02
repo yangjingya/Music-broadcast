@@ -53,7 +53,9 @@
                 this._trrigerPercent()
             },
             progressClick(e){
-                this._offSet(e.offsetX)
+                const rect=this.$refs.progressBar.getBoundingClientRect()
+                const offSetWidth=e.pageX-rect.left
+                this._offSet(offSetWidth)
                 this._trrigerPercent()
             },
             _offSet(offSetWidth){

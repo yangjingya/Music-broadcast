@@ -20,6 +20,15 @@
                             </div>
                         </div>
                     </div>
+                    <scroll class="middle-r" ref="lyricList" :data="currentSongContent&&currentSongContent.lines">
+                        <div class="lyric-wrapper">
+                            <div v-if="currentSongContent">
+                                <p ref="lyricLine" :class="{'current':currentLineNumber===index}" class="text" v-for="(line,index) in currentSongContent.lines">
+                                    {{line.txt}}
+                                </p>
+                            </div>
+                        </div>
+                    </scroll>
                 </div>
                 <div class="bottom">
                     <div class="progress-wrapper">
@@ -30,8 +39,8 @@
                         <span class="time time-r">{{format(currentSong.duration)}}</span>
                     </div>
                     <div class="operators">
-                        <div class="icon i-left">
-                            <i class="icon-sequence"></i>
+                        <div class="icon i-left" @click="changeMode">
+                            <i :class="iconMode"></i>
                         </div>
                         <div class="icon i-left" :class="disableCls">
                             <i @click="prev" class="icon-prev" ></i>
@@ -68,23 +77,29 @@
                 </div>
             </div>
         </transition>
-        <audio ref="audio" :src="currentSong.url" @canplay="ready" @error="error" @timeupdate="updateTime"></audio>
+        <audio ref="audio" :src="currentSong.url" @canplay="ready" @error="error" @timeupdate="updateTime" @ended="end"></audio>
     </div>
 </template>
 
 <script type="text/ecmascript-6">
     import {mapGetters,mapMutations} from 'vuex' 
+    import lyric from 'lyric-parser'
     import animations from 'create-keyframe-animation'
     import {prefixStyle} from 'common/js/dom.js'
     import ProgressBar from 'base/progress-bar/progress-bar.vue'
     import ProgressCircle from 'base/progress-circle/progress-circle'
+    import {playMode} from 'common/js/config.js'
+    import {shuffle} from 'common/js/util.js'
+    import Scroll from 'base/scroll/scroll.vue'
 
     const transform=prefixStyle('transform')
     export default{
         data(){
             return{
                 songReady:false,
-                currentTime:0
+                currentTime:0,
+                currentSongContent:[],
+                currentLineNumber:0
             }
         },
         methods:{
@@ -201,10 +216,59 @@
                     this.togglePlaying()
                 }
             },
+            changeMode(){
+                const mode=(this.mode+1)%3
+                this.setPlayMode(mode)
+                let list=null
+                if(mode===playMode.random){
+                    list=shuffle(this.sequenceList)
+                }else{
+                    list=this.sequenceList
+                }
+                console.log(this.sequenceList)
+                this.resetCurrentIndex(list)
+                this.setPlayList(list)
+            },
+            resetCurrentIndex(list){
+                let index=list.findIndex((item)=>{
+                    return item.id===this.currentSong.id
+                })
+                this.setCurrentIndex(index)
+            },
+            loop(){
+                this.$refs.audio.currentTime=0
+                this.$refs.audio.play()
+            },
+            end(){
+                if(this.mode===playMode.loop){
+                    this.loop()
+                }else{
+                    this.next()
+                }
+            },
+            getSongsContent(){
+                this.currentSong.getSongsContent().then((songContent)=>{
+                    this.currentSongContent=new lyric(songContent,this.handleLyric)
+                    if(this.playing){
+                        this.currentSongContent.play()
+                    }
+                })
+            },
+            handleLyric({lineNum,txt}){
+                this.currentLineNumber=lineNum
+                if(lineNum>5){
+                    let lineEl=this.$refs.lyricLine[lineNum-5]
+                    this.$refs.lyricList.scrollToElement(lineEl,1000)
+                }else{
+                    this.$refs.lyricList.scrollTo(0,0,1000)
+                }
+            },
             ...mapMutations({
                 setFullScreen:'SET_FULL_SCREEN',
                 setPlayingState:'SET_PLAYING_STATE',
-                setCurrentIndex:'SET_CURRENT_INDEX'
+                setCurrentIndex:'SET_CURRENT_INDEX',
+                setPlayMode:'SET_PLAY_MODE',
+                setPlayList:'SET_PLAYLIST'
             })
         },
         computed:{
@@ -217,6 +281,15 @@
             miniIcon(){
                 return this.playing?'icon-pause-mini':'icon-play-mini'
             },
+            iconMode(){
+                if(this.mode===playMode.sequence){
+                    return 'icon-sequence'
+                }else if(this.mode===playMode.loop){
+                    return 'icon-loop'
+                }else{
+                    return 'icon-random'
+                }
+            },
             disableCls(){
                 return this.songReady?'':'disabled'
             },
@@ -228,13 +301,19 @@
                 'playList',
                 'currentSong',
                 'playing',
-                'currentIndex'
+                'currentIndex',
+                'mode',
+                'sequenceList'
             ])
         },
         watch:{
-            currentSong(){
+            currentSong(newSong,oldSong){
+                if(newSong.id===oldSong.id){
+                    return
+                }
                 this.$nextTick(()=>{
                     this.$refs.audio.play()
+                    this.getSongsContent()
                 })
             },
             playing(whetherPlay){
@@ -246,7 +325,8 @@
         },
         components:{
             ProgressBar,
-            ProgressCircle
+            ProgressCircle,
+            Scroll
         }
     }
 </script>
@@ -359,10 +439,10 @@
                         text-align: center
                         .text
                             line-height: 32px
-                            color: $color-text-l
+                            color: rgba(255,255,255,0.6)
                             font-size: $font-size-medium
                             &.current
-                                color: $color-text
+                                color: $color-theme
             .bottom
                 position: absolute
                 bottom: 50px
