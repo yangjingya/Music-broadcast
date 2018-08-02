@@ -12,12 +12,15 @@
                     <h1 class="title">{{currentSong.name}}</h1>
                     <h2 class="subtitle">{{currentSong.singer}}</h2>
                 </div>
-                <div class="middle">
-                    <div class="middle-l">
+                <div class="middle" @touchstart.prevent="middleTouchStart" @touchmove.prevent="middleTouchMove" @touchend="middleTouchEnd">
+                    <div class="middle-l" ref="middleL">
                         <div class="cd-wrapper" ref="cdWrapper">
                             <div class="cd" :class="cdLoop">
                                 <img class="image" :src="currentSong.image">
                             </div>
+                        </div>
+                        <div class="playing-lyric-wrapper">
+                            <div class="playing-lyric">{{playingLyric}}</div>
                         </div>
                     </div>
                     <scroll class="middle-r" ref="lyricList" :data="currentSongContent&&currentSongContent.lines">
@@ -31,6 +34,10 @@
                     </scroll>
                 </div>
                 <div class="bottom">
+                    <div class="dot-wrapper">
+                        <span class="dot" :class="{'active':currentShow==='cd'}"></span>
+                        <span class="dot" :class="{'active':currentShow==='lyric'}"></span>
+                    </div>
                     <div class="progress-wrapper">
                         <span class="time time-l">{{format(currentTime)}}</span>
                         <div class="progress-bar-wrapper">
@@ -93,14 +100,20 @@
     import Scroll from 'base/scroll/scroll.vue'
 
     const transform=prefixStyle('transform')
+    const transitionDuration=prefixStyle('transitionDuration')
     export default{
         data(){
             return{
                 songReady:false,
                 currentTime:0,
-                currentSongContent:[],
-                currentLineNumber:0
+                currentSongContent:null,
+                currentLineNumber:0,
+                currentShow:'cd',
+                playingLyric:''
             }
+        },
+        created(){
+            this.touch={}
         },
         methods:{
             back(){
@@ -165,7 +178,13 @@
                 }
             },
             togglePlaying(){
+                if(!this.songReady){
+                    return
+                }
                 this.setPlayingState(!this.playing)
+                if(this.currentSongContent){
+                    this.currentSongContent.togglePlay()
+                }
             },
             prev(){
                 if(!this.songReady){
@@ -211,9 +230,13 @@
                 return `${minite}:${second}`
             },
             onProgressPercentChange(percent){
-                this.$refs.audio.currentTime=percent*this.currentSong.duration
+                const currentTime=percent*this.currentSong.duration
+                this.$refs.audio.currentTime=currentTime
                 if(!this.playing){
                     this.togglePlaying()
+                }
+                if(this.currentSongContent){
+                    this.currentSongContent.seek(currentTime*1000)
                 }
             },
             changeMode(){
@@ -238,6 +261,9 @@
             loop(){
                 this.$refs.audio.currentTime=0
                 this.$refs.audio.play()
+                if(this.currentSongContent){
+                    this.currentSongContent.seek(0)
+                }
             },
             end(){
                 if(this.mode===playMode.loop){
@@ -262,6 +288,57 @@
                 }else{
                     this.$refs.lyricList.scrollTo(0,0,1000)
                 }
+                this.playingLyric=txt
+            },
+            middleTouchStart(e){
+                this.touch.initiate=true
+                this.touch.startX=e.touches[0].pageX
+                this.touch.startY=e.touches[0].pageY
+            },
+            middleTouchMove(e){
+                if(!this.touch.initiate){
+                    return
+                }
+                const deltaX=e.touches[0].pageX-this.touch.startX
+                const deltaY=e.touches[0].pageY-this.touch.startY
+                if(Math.abs(deltaY)>Math.abs(deltaX)){
+                    return
+                }
+                const left=this.currentShow==='cd'?0:-window.innerWidth
+                const offsetWidth=Math.min(Math.max(-window.innerWidth,left+deltaX),0)
+                this.touch.percent=Math.abs(offsetWidth/window.innerWidth)
+                this.$refs.lyricList.$el.style[transform]=`translate3d(${offsetWidth}px,0,0)`
+                this.$refs.lyricList.$el.style[transitionDuration]=0
+                this.$refs.middleL.style['opacity']=1-this.touch.percent
+                this.$refs.middleL.style[transitionDuration]=0
+            },
+            middleTouchEnd(){
+                let offsetWidth
+                let opacity
+                if(this.currentShow==='cd'){
+                    if(this.touch.percent>0.1){
+                        offsetWidth=-window.innerWidth
+                        this.currentShow='lyric'
+                        opacity=0
+                    }else{
+                        offsetWidth=0
+                        opacity=1
+                    }
+                }else{
+                    if(this.touch.percent<0.9){
+                        offsetWidth=0
+                        this.currentShow='cd'
+                        opacity=1
+                    }else{
+                        offsetWidth=-window.innerWidth
+                        opacity=0
+                    }
+                }
+                const time=300
+                this.$refs.lyricList.$el.style[transform]=`translate3d(${offsetWidth}px,0,0)`
+                this.$refs.lyricList.$el.style[transitionDuration]=`${time}ms`
+                this.$refs.middleL.style['opacity']=opacity
+                this.$refs.middleL.style[transitionDuration]=`${time}ms`
             },
             ...mapMutations({
                 setFullScreen:'SET_FULL_SCREEN',
@@ -310,6 +387,9 @@
             currentSong(newSong,oldSong){
                 if(newSong.id===oldSong.id){
                     return
+                }
+                if(this.currentSongContent){
+                    this.currentSongContent.stop()
                 }
                 this.$nextTick(()=>{
                     this.$refs.audio.play()
@@ -418,14 +498,14 @@
                                 border-radius 50%
                     .playing-lyric-wrapper
                         width: 80%
-                        margin: 30px auto 0 auto
+                        margin: 60px auto 0 auto
                         overflow: hidden
                         text-align: center
                         .playing-lyric
                             height: 20px
                             line-height: 20px
                             font-size: $font-size-medium
-                            color: $color-text-l
+                            color: rgb(255,255,255)
                 .middle-r
                     display: inline-block
                     vertical-align: top
@@ -457,11 +537,11 @@
                         width: 8px
                         height: 8px
                         border-radius: 50%
-                        background: $color-text-l
+                        background: rgba(255,255,255,0.2)
                         &.active
                             width: 20px
                             border-radius: 5px
-                            background: $color-text-ll
+                            background: rgba(255,255,255,0.5)
                 .progress-wrapper
                     display: flex
                     align-items: center
