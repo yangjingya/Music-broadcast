@@ -59,7 +59,6 @@ function filterSinger(singer){
 
 export function getInforForSongs(songmid){
     const url="/api/getInforForSongs"
-
     const data=Object.assign({},commonParams,{
         loginUin: 0,
         hostUin: 0,
