@@ -107,6 +107,7 @@ export default {
                     color: $color-text-d
                     font-size: $font-size-small
                     .topTitle
+                        no-wrap()
                         font-size:$font-size-large
                         color:black
                     .song
