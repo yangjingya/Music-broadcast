@@ -45,7 +45,7 @@ export function createSong(musicData,vKey){
     
 }
 
-export function filterSinger(singer){
+function filterSinger(singer){
     let ret=[]
     if(!singer){
         return ''

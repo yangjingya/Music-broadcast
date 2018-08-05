@@ -1,7 +1,7 @@
 <template>
     <scroll class="suggest" :data="result">
         <ul class="suggest-list">
-            <li class="suggest-item" v-for="item in result">
+            <li class="suggest-item" v-for="item in result" @click="selectItem(item)">
                 <div class="icon">
                     <i :class="getIconClass(item)"></i>
                 </div>
@@ -16,8 +16,8 @@
 <script type="text/ecmascript-6">
     import {searchInfo} from 'api/search.js'
     import {ERR_OK} from 'api/config.js'
-    import {filterSinger} from 'common/js/song.js'
     import Scroll from 'base/scroll/scroll.vue'
+    import {createSong,getInforForSongs} from 'common/js/song.js'
 
     const TYPE_SINGER='singer'
 
@@ -41,14 +41,16 @@
         methods:{
             search(){
                 searchInfo(this.query,this.showSinger,this.page).then((res)=>{
-                    this.result=this._genResult(res.data)
+                    // this.result=this._genResult(res.data)
+                    this.result=[]
+                    this._genResult(res.data)
                 })
             },
             getDisplayName(item){
                 if(item.type===TYPE_SINGER){
                     return item.singername
                 }else{
-                    return `${item.songname}-${filterSinger(item.singer)}`
+                    return `${item.name}-${item.singer}`
                 }
             },
             getIconClass(item){
@@ -58,15 +60,37 @@
                     return 'icon-music'
                 }
             },
+            selectItem(item){
+
+            },
             _genResult(data){
-                let ret=[]
+                // let ret=[]
                 if(data.zhida&&data.zhida.singerid){
-                    ret.push({...data.zhida,...{type:TYPE_SINGER}})
+                    // ret.push({...data.zhida,...{type:TYPE_SINGER}})
+                    this.result.push({...data.zhida,...{type:TYPE_SINGER}})
                 }
                 if(data.song){
-                    ret=ret.concat(data.song.list)
+                    // ret=ret.concat(this._normalizeSongs(data.song.list))
+                    this._normalizeSongs(data.song.list)
                 }
-                return ret
+                // return ret
+            },
+            _normalizeSongs(list){
+                // let ret=[]
+                if(!list){
+                    return
+                }
+                list.forEach((musicData) => {
+                    if(musicData.songid&&musicData.albummid){
+                        getInforForSongs(musicData.songmid).then((res)=>{
+                            if(res.code===ERR_OK){
+                                // ret.push(createSong(musicData,res.data.items[0].vkey))
+                                this.result.push(createSong(musicData,res.data.items[0].vkey))
+                            } 
+                        })     
+                    }
+                })
+                // return ret
             }
         },
         watch:{
