@@ -1,5 +1,5 @@
 <template>
-    <scroll class="suggest" :data="result" :pullup="pullup" @scrollToEnd="searchMore">
+    <scroll class="suggest" :data="result" :pullup="pullup" @scrollToEnd="searchMore" ref="suggest">
         <ul class="suggest-list">
             <li class="suggest-item" v-for="item in result" @click="selectItem(item)">
                 <div class="icon">
@@ -11,6 +11,9 @@
             </li>
             <loading v-show="hasMore" title=""></loading>
         </ul>
+        <div class="no-result-wrapper">
+            <no-result :title="query" :show="show"></no-result>
+        </div>
     </scroll>
 </template>
 
@@ -21,7 +24,8 @@
     import {createSong,getInforForSongs} from 'common/js/song.js'
     import Loading from 'base/loading/loading.vue'
     import Singer from 'common/js/singer.js'
-    import {mapMutations} from 'vuex'
+    import {mapMutations,mapActions} from 'vuex'
+    import NoResult from 'base/no-result/no-result.vue'
 
     const TYPE_SINGER='singer'
     const PERPAGE=20
@@ -32,7 +36,8 @@
                 page:1,
                 result:[],
                 pullup:true,
-                hasMore:true
+                hasMore:true,
+                show:false
             }
         },
         props:{
@@ -47,12 +52,19 @@
         },
         methods:{
             search(){
+                this.page=1
                 this.hasMore=true
+                this.$refs.suggest.scrollTo(0,0)
                 searchInfo(this.query,this.showSinger,this.page,PERPAGE).then((res)=>{
                     // this.result=this._genResult(res.data)
                     this.result=[]
                     this._genResult(res.data)
                     this._checkMore(res.data)
+                    if(res.data.song.list.length>0){
+                        this.show=false
+                    }else{
+                        this.show=true
+                    }
                 })
             },
             getDisplayName(item){
@@ -76,11 +88,11 @@
                         name: item.singername
                     })
                     this.$router.push({
-                        path: `/singer/${singer.id}`
+                        path: `/search/${singer.id}`
                     })
                     this.setSinger(singer)
                 }else{
-                   
+                    this.insertSong(item)
                 }
             },
             searchMore(){
@@ -131,7 +143,10 @@
             },
             ...mapMutations({
                 setSinger:'SET_SINGER'
-            })
+            }),
+            ...mapActions([
+                'insertSong'
+            ])
         },
         watch:{
             query(){
@@ -140,7 +155,8 @@
         },
         components:{
             Scroll,
-            Loading
+            Loading,
+            NoResult
         }
     }
 </script>
