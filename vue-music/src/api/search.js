@@ -16,7 +16,7 @@ export function getHot(){
     return jsonp(url,data,options)
 }
 
-export function searchInfo(keyWord,Zhida,p){
+export function searchInfo(keyWord,Zhida,p,perpage){
     const url='/api/searchInfo'
 
     const data=Object.assign({},commonParams,{
@@ -33,8 +33,8 @@ export function searchInfo(keyWord,Zhida,p){
         ie: 'utf-8',
         sem: 1,
         aggr: 0,
-        perpage: 20,
-        n: 20,
+        perpage: perpage,
+        n: perpage,
         p: p,
         remoteplace: 'txt.mqq.all',
         _: 1533361165911,
