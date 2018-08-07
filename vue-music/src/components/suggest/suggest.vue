@@ -94,6 +94,7 @@
                 }else{
                     this.insertSong(item)
                 }
+                this.$emit('select',item)
             },
             searchMore(){
                 if(!this.hasMore){
@@ -105,6 +106,9 @@
                     this._genResult(res.data)
                     this._checkMore(res.data)
                 })
+            },
+            refresh(){
+                this.$refs.suggest.refresh()
             },
             _checkMore(data){
                 const song=data.song
