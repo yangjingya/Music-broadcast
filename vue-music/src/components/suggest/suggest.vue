@@ -11,7 +11,7 @@
             </li>
             <loading v-show="hasMore" title=""></loading>
         </ul>
-        <div class="no-result-wrapper">
+        <div class="no-result-wrapper" v-show="">
             <no-result :title="query" :show="show"></no-result>
         </div>
     </scroll>

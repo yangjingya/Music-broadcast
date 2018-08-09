@@ -58,8 +58,8 @@
                         <div class="icon i-right" :class="disableCls">
                             <i @click="next" class="icon-next"></i>
                         </div>
-                        <div class="icon i-right">
-                            <i class="icon-not-favorite"></i>
+                        <div class="icon i-right" @click.stop="toggleFavourite(currentSong)">
+                            <i class="icon" :class="getFavouriteIcon(currentSong)"></i>
                         </div>
                     </div>
                 </div>
@@ -85,7 +85,7 @@
             </div>
         </transition>
         <playlist ref="playlist"></playlist>
-        <audio ref="audio" :src="currentSong.url" @canplay="ready" @error="error" @timeupdate="updateTime" @ended="end"></audio>
+        <audio ref="audio" :src="currentSong.url" @play="ready" @error="error" @timeupdate="updateTime" @ended="end"></audio>
     </div>
 </template>
 
@@ -196,6 +196,7 @@
                 }
                 if(this.playList.length===1){
                     this.loop()
+                    return
                 }else{
                     let index=this.currentIndex-1
                     if(index===-1){
@@ -214,6 +215,7 @@
                 }
                 if(this.playList.length===1){
                     this.loop()
+                    return
                 }else{
                     let index=this.currentIndex+1
                     if(index===this.playList.length){
@@ -268,6 +270,9 @@
             },
             getSongsContent(){
                 this.currentSong.getSongsContent().then((songContent)=>{
+                    if(this.currentSong.songContent!==songContent){
+                        return
+                    }
                     this.currentSongContent=new lyric(songContent,this.handleLyric)
                     if(this.playing){
                         this.currentSongContent.play()
@@ -279,28 +284,34 @@
                 })
             },
             handleLyric({lineNum,txt}){
-                this.currentLineNumber=lineNum
-                if(lineNum>5){
-                    let lineEl=this.$refs.lyricLine[lineNum-5]
-                    this.$refs.lyricList.scrollToElement(lineEl,1000)
-                }else{
-                    this.$refs.lyricList.scrollTo(0,0,1000)
+                this.currentLineNumber = lineNum
+                if (lineNum > 5) {
+                let lineEl = this.$refs.lyricLine[lineNum - 5]
+                this.$refs.lyricList.scrollToElement(lineEl, 1000)
+                } else {
+                this.$refs.lyricList.scrollTo(0, 0, 1000)
                 }
-                this.playingLyric=txt
+                this.playingLyric = txt
             },
             middleTouchStart(e){
-                this.touch.initiate=true
-                this.touch.startX=e.touches[0].pageX
-                this.touch.startY=e.touches[0].pageY
+                this.touch.initiated = true
+                // 用来判断是否是一次移动
+                this.touch.moved = false
+                const touch = e.touches[0]
+                this.touch.startX = touch.pageX
+                this.touch.startY = touch.pageY
             },
             middleTouchMove(e){
-                if(!this.touch.initiate){
+                if(!this.touch.initiated){
                     return
                 }
                 const deltaX=e.touches[0].pageX-this.touch.startX
                 const deltaY=e.touches[0].pageY-this.touch.startY
                 if(Math.abs(deltaY)>Math.abs(deltaX)){
                     return
+                }
+                if (!this.touch.moved) {
+                    this.touch.moved = true
                 }
                 const left=this.currentShow==='cd'?0:-window.innerWidth
                 const offsetWidth=Math.min(Math.max(-window.innerWidth,left+deltaX),0)
@@ -311,6 +322,9 @@
                 this.$refs.middleL.style[transitionDuration]=0
             },
             middleTouchEnd(){
+                if (!this.touch.moved) {
+                    return
+                }
                 let offsetWidth
                 let opacity
                 if(this.currentShow==='cd'){
@@ -337,6 +351,7 @@
                 this.$refs.lyricList.$el.style[transitionDuration]=`${time}ms`
                 this.$refs.middleL.style['opacity']=opacity
                 this.$refs.middleL.style[transitionDuration]=`${time}ms`
+                this.touch.initiated = false
             },
             showPlayList(){
                 this.$refs.playlist.show()
@@ -381,17 +396,18 @@
                 if(this.currentSongContent){
                     this.currentSongContent.stop()
                 }
-                setTimeout(()=>{
+                clearTimeout(this.timer)
+                this.timer=setTimeout(()=>{
                     this.$refs.audio.play()
                     this.getSongsContent()
                 },1000)
             },
-            playing(whetherPlay){
-                const audio=this.$refs.audio
-                this.$nextTick(()=>{
-                    whetherPlay?audio.play():audio.pause()
+            playing(newPlaying) {
+                const audio = this.$refs.audio
+                this.$nextTick(() => {
+                    newPlaying ? audio.play() : audio.pause()
                 })
-            }
+            },
         },
         components:{
             ProgressBar,

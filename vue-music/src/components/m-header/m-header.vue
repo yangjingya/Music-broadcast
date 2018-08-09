@@ -2,6 +2,9 @@
     <div class="m-header">
         <div class="icon"></div>
         <h1 class="text">Music</h1>
+        <router-link  to="/user" class="mine" tag="div">
+            <i class="icon-mine"></i>
+        </router-link>
     </div>
 </template>
 
@@ -37,5 +40,14 @@ export default {
             line-height 44px
             font-size $font-size-large
             color $color-background
+        .mine
+            position: absolute
+            top: 0
+            right: 0
+            .icon-mine
+                display: block
+                padding: 12px
+                font-size: 20px
+                color: white
 </style>
 

@@ -16,8 +16,8 @@
                         <li :key="item.id" ref="listItem" class="item" v-for="(item,index) in sequenceList" @click="selectItem(item,index)"> 
                             <i class="current" :class="getCurrentItem(item)"></i>
                             <span class="text">{{item.name}} —— {{item.singer}}</span>
-                            <span class="like">
-                                <i class="icon-not-favorite"></i>
+                            <span class="like" @click.stop="toggleFavourite(item)">
+                                <i :class="getFavouriteIcon(item)"></i>
                             </span>
                             <span class="delete" @click.stop="deleteOne(item)">
                                 <i class="icon-delete"></i>
@@ -207,7 +207,7 @@
                         font-size: $font-size-small
                         color: white
                         .icon-favorite
-                            color: white
+                            color: red
                     .delete
                         extend-click()
                         font-size: $font-size-small

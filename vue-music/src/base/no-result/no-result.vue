@@ -3,7 +3,8 @@
         <div class="no-result-icon">
             <img src="~common/image/noAnswer.png">
         </div>
-        <p class="no-result-text">很抱歉，没有找到与“{{title}}”相关的结果</p>
+        <p class="no-result-text" v-show="title">很抱歉，没有找到与“{{title}}”相关的结果</p>
+        <p class="no-result-text" v-show="text">{{text}}</p>
     </div>
 </template>
 
@@ -14,13 +15,14 @@
                 type:String,
                 default:''
             },
+            text:{
+                type:String,
+                default:''
+            },
             show:{
                 type:Boolean,
                 default:false
             }
-        },
-        created(){
-            console.log(this.show)
         }
     }
 </script>
