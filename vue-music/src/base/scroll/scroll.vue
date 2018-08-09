@@ -30,7 +30,11 @@ export default {
         pullup:{
             type:Boolean,
             default:false
-        }//开启上拉刷新
+        },//开启上拉刷新
+        refreshDelay:{
+            type:Number,
+            default:20
+        }
     },
     mounted(){
         setTimeout(()=>{
@@ -81,7 +85,7 @@ export default {
         data(){
             setTimeout(()=>{
                 this.refresh()
-            },20)
+            },this.refreshDelay)
         }//因为data数据变化，则需要修改 BScroll
     }
 }
