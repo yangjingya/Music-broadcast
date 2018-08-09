@@ -46,10 +46,10 @@ import Scroll from 'base/scroll/scroll.vue'
 import {getHot} from 'api/search.js'
 import {ERR_OK} from 'api/config.js'
 import {mapActions,mapGetters} from 'vuex'
-import {playListMixin} from 'common/js/mixin.js'
+import {playListMixin,searchMixin} from 'common/js/mixin.js'
 
 export default {
-    mixins:[playListMixin],
+    mixins:[playListMixin,searchMixin],
     data(){
         return{
             hotKey:[],
@@ -63,15 +63,6 @@ export default {
     methods:{
         reload(url){
             window.location.href=url
-        },
-        addQuery(query){
-            this.$refs.searchBox.setQuery(query)
-        },
-        onQueryChange(query){
-            this.query=query
-        },
-        saveSearch(){
-            this.savaSearchHistory(this.query)
         },
         showConfirm(){
             this.$refs.confirm.show()
@@ -96,18 +87,13 @@ export default {
             this.$refs.suggest.refresh()
         },
         ...mapActions([
-            'savaSearchHistory',
-            'deleteSearchHistory',
             'clearSearchHistory'
         ])
     },
     computed:{
         shortcut(){
             return this.hotKey.concat(this.searchHistory)
-        },
-        ...mapGetters([
-            'searchHistory'
-        ])
+        }
     },
     watch:{
         query(newQuery){
